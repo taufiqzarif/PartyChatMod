@@ -1,5 +1,6 @@
 package net.alyph.partychatmod;
 
+import net.alyph.partychatmod.util.ModRegistries;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -15,6 +16,6 @@ public class PartyChatMod implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		LOGGER.info("Hello Fabric world!");
+		ModRegistries.registerModStuffs();
 	}
 }

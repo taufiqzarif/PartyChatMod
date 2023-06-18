@@ -3,7 +3,8 @@
 	"package": "net.alyph.partychatmod.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"mixins": [
-		"ExampleMixin"
+		"ExampleMixin",
+		"ModEntityDataSaver"
 	],
 	"injectors": {
 		"defaultRequire": 1
