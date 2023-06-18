@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "partychatmod",
+	"version": "${version}",
+	"name": "Party Chat Mod",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"Alyph"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/partychatmod/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.alyph.partychatmod.PartyChatMod"
+		],
+		"client": [
+			"net.alyph.partychatmod.PartyChatModClient"
+		],
+		"fabric-datagen": [
+			"net.alyph.partychatmod.PartyChatModDataGenerator"
+		]
+	},
+	"mixins": [
+		"partychatmod.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.14.21",
+		"minecraft": "~1.20",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
