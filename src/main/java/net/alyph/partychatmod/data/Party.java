@@ -2,82 +2,102 @@ package net.alyph.partychatmod.data;
 
 
 
-import com.google.gson.Gson;
+import com.google.common.collect.Sets;
+import net.minecraft.entity.player.PlayerEntity;
 
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.Set;
 import java.util.UUID;
 
 public class Party {
-    private final UUID partyID;
-    private String partyName;
-    private final UUID leaderID;
-    private final List<UUID> memberIDs;
-
-    public Party(UUID partyID, String partyName, UUID leaderID) {
-        this.partyID = partyID;
+    final String partyName;
+    private final UUID leaderUUID;
+    private Set<NameAndUUID> playerList = Sets.newHashSet();
+    public Party(String partyName, UUID leaderUUID) {
         this.partyName = partyName;
-        this.leaderID = leaderID;
-        this.memberIDs = new ArrayList<>();
+        this.leaderUUID = leaderUUID;
+    }
+    public Party(String partyName, UUID leaderUUID, Set<NameAndUUID> playerList) {
+        this.partyName = partyName;
+        this.leaderUUID = leaderUUID;
+        for(NameAndUUID player : playerList) {
+            this.playerList.add(player);
+        }
     }
 
-    // Add a method to your Party class to convert it to and from a JSON string:
-    public String toJson() {
-        Gson gson = new Gson();
-        return gson.toJson(this);
-    }
-
-    public static Party fromJson(String json) {
-        Gson gson = new Gson();
-        return gson.fromJson(json, Party.class);
-    }
-
-
-
-    public UUID getPartyID() {
-        return partyID;
+    public Party(String partyName, Set<NameAndUUID> players, UUID leaderUUID) {
+        this.partyName = partyName;
+        this.leaderUUID = leaderUUID;
+        for (NameAndUUID player : players) {
+            this.playerList.add(player);
+        }
     }
 
     public UUID getLeaderID() {
-        return leaderID;
+        return leaderUUID;
     }
-
     public String getPartyName() {
         return partyName;
     }
 
-    public void setPartyName(String partyName) {
-        this.partyName = partyName;
+    public Set<NameAndUUID> getPlayerList() {
+        return this.playerList;
+    }
+    public Set<UUID> getPlayerUUIDList() {
+        Set<UUID> playerUUIDList = Sets.newHashSet();
+        for(NameAndUUID player : playerList) {
+            playerUUIDList.add(player.getPlayerUUID());
+        }
+        return playerUUIDList;
+    }
+    public Set<String> getPlayerNamesList() {
+        Set<String> playerNamesList = Sets.newHashSet();
+        for(NameAndUUID player : playerList) {
+            playerNamesList.add(player.getPlayerName());
+        }
+        return playerNamesList;
     }
 
-    public void addMember(UUID memberID) {
-        memberIDs.add(memberID);
+    public void addPlayer(PlayerEntity player) {
+        this.playerList.add(NameAndUUID.of(player));
+    }
+    public void addPlayer(NameAndUUID player) {
+        this.playerList.add(player);
     }
 
-    public void removeMember(UUID memberID) {
-        memberIDs.remove(memberID);
+    public void removePlayer(UUID playerUUID) {
+        for(NameAndUUID playerInList : playerList) {
+            if(playerInList.getPlayerUUID().equals(playerUUID)) {
+                this.playerList.remove(playerInList);
+                return;
+            }
+        }
     }
 
-    public List<UUID> getMemberIDs() {
-        return memberIDs;
+    public void setPlayerList(Set<NameAndUUID> playerList) {
+        this.playerList = playerList;
     }
 
     public boolean isMember(UUID memberID) {
-        return memberIDs.contains(memberID);
+        for(NameAndUUID player : playerList) {
+            if(player.getPlayerUUID().equals(memberID)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    public boolean isLeader(UUID memberID) {
-        return leaderID.equals(memberID);
+    public boolean isLeader(UUID leaderUUID) {
+        return this.leaderUUID.equals(leaderUUID);
     }
 
-    public boolean isPartyEmpty() {
-        return memberIDs.isEmpty();
+    public String playerListToString() {
+        String playerListString = "";
+        for(NameAndUUID player : playerList) {
+            playerListString += player.getPlayerName() + ", ";
+        }
+        return playerListString;
     }
-
-    public boolean isPartyFull() {
-        return memberIDs.size() >= 4;
-    }
-
 
 
 }

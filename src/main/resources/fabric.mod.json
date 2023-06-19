@@ -17,12 +17,6 @@
 	"entrypoints": {
 		"main": [
 			"net.alyph.partychatmod.PartyChatMod"
-		],
-		"client": [
-			"net.alyph.partychatmod.PartyChatModClient"
-		],
-		"fabric-datagen": [
-			"net.alyph.partychatmod.PartyChatModDataGenerator"
 		]
 	},
 	"mixins": [

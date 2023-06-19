@@ -1,6 +1,6 @@
 package net.alyph.partychatmod.util;
 
-import net.alyph.partychatmod.command.CreatePartyCommand;
+import net.alyph.partychatmod.command.PartyCommand;
 import net.alyph.partychatmod.command.ReturnHomeCommand;
 import net.alyph.partychatmod.command.SetHomeCommand;
 import net.alyph.partychatmod.event.ModPlayerEventCopyFrom;
@@ -15,7 +15,7 @@ public class ModRegistries {
     private static void registerCommands() {
         CommandRegistrationCallback.EVENT.register(SetHomeCommand::register);
         CommandRegistrationCallback.EVENT.register(ReturnHomeCommand::register);
-        CommandRegistrationCallback.EVENT.register(CreatePartyCommand::register);
+        CommandRegistrationCallback.EVENT.register(PartyCommand::register);
     }
 
     private static void registerEvents() {
