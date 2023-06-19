@@ -47,16 +47,34 @@ public class PartyCommand {
                                 .then(CommandManager.argument("message", MessageArgumentType.message())
                                         .executes(PartyCommand::message)
                                 )
+                        )
                 )
-        )
+
                 .then(CommandManager.literal("create").requires(serverCommandSource -> true)
                         .then(CommandManager.argument("partyname", StringArgumentType.string())
                                 .executes((context) -> create(context))
                         )
                 )
+
                 .then(CommandManager.literal("join")
                         .then(CommandManager.argument("Party", StringArgumentType.string())
                                 .executes(PartyCommand::join)
+                        )
+                )
+
+                .then(CommandManager.literal("leave")
+                        .then(CommandManager.argument("Party", StringArgumentType.string())
+                                .suggests(PartyCommand::suggestParties)
+                                .executes(PartyCommand::leave)
+                        )
+                )
+
+                .then(CommandManager.literal("invite")
+                        .then(CommandManager.argument("Party", StringArgumentType.string())
+                                .suggests(PartyCommand::suggestParties)
+                                .then(CommandManager.argument("Players", EntityArgumentType.players())
+                                        .executes(PartyCommand::invite)
+                                )
                         )
                 )
         );
@@ -232,7 +250,7 @@ public class PartyCommand {
         return 1;
     }
 
-    public static int invite(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+    private static int invite(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         final String partyName = StringArgumentType.getString(context, "Party");
         Party party = null;
         ServerCommandSource source = context.getSource();
