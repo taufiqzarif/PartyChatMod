@@ -175,11 +175,12 @@ public class PartyCommand {
             }
         }
 
-        MutableText partyMessage = Text.literal("<" + partyName + "> ").styled(style -> style
+        MutableText partyMessage = Text.literal("[" + partyName + "] ").styled(style -> style
+                .withColor(Formatting.YELLOW)
                 .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/p " + partyName + " "))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(
                         partyName + "\n" +
-                        "Click to suggest command"
+                        "Click to send message"
                 )))
         );
 
@@ -428,7 +429,7 @@ public class PartyCommand {
 
         // Show total players in party and player names
         int totalPlayers = party.getPlayerList().size();
-        MutableText message = Text.literal("Player" + (totalPlayers > 1 ? "s" : "") + " [" + totalPlayers + "] in party \"" + partyName + "\":\n").styled(style -> style.withColor(Formatting.GRAY));
+        MutableText message = Text.literal("Player" + (totalPlayers > 1 ? "s" : "") + " (" + totalPlayers + ") in party \"" + partyName + "\":\n").styled(style -> style.withColor(Formatting.GRAY));
 
         message.append(Text.literal(playerListAsString).styled(style -> style.withColor(Formatting.GREEN)));
 
