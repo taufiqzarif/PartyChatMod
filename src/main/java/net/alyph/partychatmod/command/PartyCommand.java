@@ -146,6 +146,12 @@ public class PartyCommand {
         return sBuilder.buildFuture();
     }
 
+    // Change player's default chat to send to selected party
+    private static int chat(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        // TODO
+        return 0;
+    }
+
     // Handle message
     private static int message(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         final String partyName = StringArgumentType.getString(context, "Party");
