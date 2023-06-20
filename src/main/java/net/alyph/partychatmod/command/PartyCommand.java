@@ -309,11 +309,10 @@ public class PartyCommand {
 
         Collection<ServerPlayerEntity> playerEntities = EntityArgumentType.getPlayers(context, "Players");
 
-        final Party newParty = party;
 
         MutableText partyText = Text.literal(partyName).styled(style -> style
                 .withColor(Formatting.GREEN)
-                .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/party join " + partyName))
+                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/party join " + partyName))
                 .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Text.literal(
                         "Party: " + partyName + "\n" +
                         "Click to join party"
