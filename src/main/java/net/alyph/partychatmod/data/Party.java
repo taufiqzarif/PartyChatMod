@@ -33,7 +33,7 @@ public class Party {
         }
     }
 
-    public UUID getLeaderID() {
+    public UUID getLeaderUUID() {
         return leaderUUID;
     }
     public String getPartyName() {
@@ -91,7 +91,7 @@ public class Party {
         return this.leaderUUID.equals(leaderUUID);
     }
 
-    public String playerListToString() {
+    public String getPlayerListToString() {
         String playerListString = "";
         for(NameAndUUID player : playerList) {
             playerListString += player.getPlayerName() + ", ";

@@ -41,6 +41,8 @@ public class PartyCommand {
 
         dispatcher.register((LiteralArgumentBuilder<ServerCommandSource>) ((LiteralArgumentBuilder<ServerCommandSource>)
                 CommandManager.literal("party").requires(serverCommandSource -> true))
+
+                // Send message to a party
                 .then(CommandManager.literal("message")
                         .then(CommandManager.argument("Party", StringArgumentType.string())
                                 .suggests(PartyCommand::suggestParties)
@@ -50,18 +52,21 @@ public class PartyCommand {
                         )
                 )
 
+                // Create a new party
                 .then(CommandManager.literal("create").requires(serverCommandSource -> true)
                         .then(CommandManager.argument("partyname", StringArgumentType.string())
                                 .executes((context) -> create(context))
                         )
                 )
 
+                // Joins a party
                 .then(CommandManager.literal("join")
                         .then(CommandManager.argument("Party", StringArgumentType.string())
                                 .executes(PartyCommand::join)
                         )
                 )
 
+                // Leaves party
                 .then(CommandManager.literal("leave")
                         .then(CommandManager.argument("Party", StringArgumentType.string())
                                 .suggests(PartyCommand::suggestParties)
@@ -69,12 +74,31 @@ public class PartyCommand {
                         )
                 )
 
+                // Invite player to join the party
                 .then(CommandManager.literal("invite")
                         .then(CommandManager.argument("Party", StringArgumentType.string())
                                 .suggests(PartyCommand::suggestParties)
                                 .then(CommandManager.argument("Players", EntityArgumentType.players())
                                         .executes(PartyCommand::invite)
                                 )
+                        )
+                )
+
+                // Kick player out from the party
+                .then(CommandManager.literal("kick")
+                        .then(CommandManager.argument("Party", StringArgumentType.string())
+                                .suggests(PartyCommand::suggestParties)
+                                .then(CommandManager.argument("Players", EntityArgumentType.players())
+                                        .executes(PartyCommand::kick)
+                                )
+                        )
+                )
+
+                // List all players in party
+                .then(CommandManager.literal("players")
+                        .then(CommandManager.argument("Party", StringArgumentType.string())
+                                .suggests(PartyCommand::suggestParties)
+                                .executes(PartyCommand::players)
                         )
                 )
         );
@@ -316,4 +340,102 @@ public class PartyCommand {
         }
         return 0;
     }
+
+    // Kick user function. ONLY LEADER OF PARTY CAN KICK USERS
+    private static int kick(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        final String partyName = StringArgumentType.getString(context, "Party");
+        Party party = null;
+        ServerCommandSource source = context.getSource();
+
+        for (Party p : PartyChatMod.partyChatFile.parties) {
+            if (p.getPartyName().equals(partyName)) {
+                party = p;
+                break;
+            }
+        }
+
+        if(party == null) {
+            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist!"));
+            return 0;
+        }
+
+        UUID currentPlayerUUID = source.getPlayer().getUuid();
+
+        if(currentPlayerUUID != null) {
+            if(!party.getPlayerUUIDList().contains(currentPlayerUUID)) {
+                source.sendError(Text.literal("You are not in party \"" + partyName + "\"!"));
+                return 0;
+            }
+        }
+
+        ServerPlayerEntity player = null;
+        player = source.getPlayer();
+
+        if(party.getLeaderUUID().equals(player.getUuid())) {
+            Collection<ServerPlayerEntity> playerEntities = EntityArgumentType.getPlayers(context, "Players");
+
+            for (ServerPlayerEntity playerEntity : playerEntities) {
+                if(party.getPlayerUUIDList().contains(playerEntity.getUuid())) {
+                    PartyChatMod.partyChatFile.removePlayerFromParty(partyName, playerEntity);
+                    playerEntity.sendMessageToClient(Text.literal("You have been kicked from party \"" + partyName + "\"!"), false);
+                    playerEntity.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.MASTER, 1.0f, 1.0f);
+                }
+            }
+
+            source.sendFeedback(() -> Text.literal("Kicked player from party \"" + partyName + "\"!"), true);
+            return 1;
+        } else {
+            source.sendError(Text.literal("You are not the leader of party \"" + partyName + "\"!"));
+        }
+        return 0;
+    }
+
+    private static int players(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        final String partyName = StringArgumentType.getString(context, "Party");
+        Party party = null;
+        ServerCommandSource source = context.getSource();
+
+        for(Party p : PartyChatMod.partyChatFile.parties) {
+            if(p.getPartyName().equals(partyName)) {
+                party = p;
+                break;
+            }
+        }
+
+        if(party == null) {
+            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist!"));
+            return 0;
+        }
+
+        UUID currentPlayerUUID = source.getPlayer().getUuid();
+
+        if(currentPlayerUUID != null) {
+            if(!party.getPlayerUUIDList().contains(currentPlayerUUID)) {
+                source.sendError(Text.literal("You are not in party \"" + partyName + "\"!"));
+                return 0;
+            }
+        }
+        String playerListAsString = "";
+        int i = 0;
+
+        for(String playerName : party.getPlayerNamesList()) {
+            if(i > 0) {
+                playerListAsString += " , ";
+            }
+            playerListAsString += playerName;
+            i += 1;
+        }
+
+        // Show total players in party and player names
+        int totalPlayers = party.getPlayerList().size();
+        MutableText message = Text.literal("Player" + (totalPlayers > 1 ? "s" : "") + " [" + totalPlayers + "] in party \"" + partyName + "\":\n").styled(style -> style.withColor(Formatting.GRAY));
+
+        message.append(Text.literal(playerListAsString).styled(style -> style.withColor(Formatting.GREEN)));
+
+        source.sendFeedback(() -> message, false);
+
+        return i;
+    }
+
+
 }
