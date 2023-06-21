@@ -101,11 +101,14 @@ public class PartyCommand {
                         .then(CommandManager.argument("Party", StringArgumentType.string())
                                 .suggests(PartyCommand::suggestParties)
                                 .then(CommandManager.argument("Players", EntityArgumentType.players())
-                                        .executes(PartyCommand::ban))
-                                .then(CommandManager.argument("PlayerString", StringArgumentType.string())
-                                        .executes(PartyCommand::banOffline))
+                                        .executes(PartyCommand::ban)
+                                )
                         )
                 )
+
+
+
+
 
                 // Unban player from the party
                 .then(CommandManager.literal("unban")
@@ -531,12 +534,11 @@ public class PartyCommand {
         if (party.getLeaderUUID().equals(player.getUuid())) {
 
             int totalPlayerBanned = 0;
-
+            String name = null;
             // Gets only online players
-            Collection<ServerPlayerEntity> playerSelected = EntityArgumentType.getPlayers(context, "Players"); // Only for one player [in the argument] or @a, if @a, then all players will be added to playerSelected
-
-
-            if(playerSelected.size() == 1) {
+            try {
+                Collection<ServerPlayerEntity> playerSelected = EntityArgumentType.getPlayers(context, "Players");
+                            if(playerSelected.size() == 1) {
                 if(party.getLeaderUUID().equals(playerSelected.iterator().next().getUuid())) {
                     source.sendError(Text.literal("You cannot ban yourself"));
                     return 0;
@@ -582,8 +584,21 @@ public class PartyCommand {
                 }
             }
 
-            source.sendFeedback(() -> Text.literal("Banned player from party \"" + partyName + "\""), true);
-            return 1;
+                source.sendFeedback(() -> Text.literal("Banned player from party \"" + partyName + "\""), true);
+                return 1;
+            } catch (CommandSyntaxException e) {
+                if(e.getRawMessage().getString().equals("No player was found")) {
+                    //source.sendError(Text.literal("Nadai player was found"));
+                    PartyChatMod.LOGGER.info("name: " + name);
+                    String input = context.getInput();
+                    name = input.substring(input.lastIndexOf(" ") + 1);
+                    banOffline(context, name);
+                    return 0;
+                }
+                else {
+                    throw e;
+                }
+            }
         } else {
             source.sendError(Text.literal("You are not the leader of party \"" + partyName + "\""));
         }
@@ -591,8 +606,9 @@ public class PartyCommand {
     }
 
     // Ban offline players function. ONLY LEADER OF PARTY CAN BAN USERS
-    private static int banOffline(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+    private static int banOffline(CommandContext<ServerCommandSource> context, String playerSelected) throws CommandSyntaxException {
         PartyChatMod.LOGGER.info("IN banOffline");
+        PartyChatMod.LOGGER.info("playeSelected: " + playerSelected);
         final String partyName = StringArgumentType.getString(context, "Party");
         Party party = null;
         ServerCommandSource source = context.getSource();
@@ -625,9 +641,6 @@ public class PartyCommand {
 
             int totalPlayerBanned = 0;
 
-            // Gets only online/offline players
-            String playerSelected = StringArgumentType.getString(context, "PlayerString");
-
             // Get the player's NameAndUUID
             NameAndUUID banPlayer = PartyChatMod.partyChatFile.findPlayerEntityViaNameFile(partyName, playerSelected);
             if(banPlayer == null) {
@@ -645,8 +658,14 @@ public class PartyCommand {
                 PartyChatMod.partyChatFile.removePlayerFromParty(partyName, banPlayer.getPlayerUUID());
                 party.addBannedPlayer(banPlayer);
                 totalPlayerBanned++;
-                player.sendMessageToClient(Text.literal("You have been banned from party \"" + partyName + "\""), false);
-                player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.MASTER, 1.0f, 1.0f);
+
+                // Check if banned player is online in the server
+                ServerPlayerEntity bannedPlayerEntity = source.getServer().getPlayerManager().getPlayer(banPlayer.getPlayerUUID());
+                if(bannedPlayerEntity != null) {
+                    player.sendMessageToClient(Text.literal("You have been banned from party \"" + partyName + "\""), false);
+                    player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.MASTER, 1.0f, 1.0f);
+                }
+
 
                 // Create message with custom color, using FORMATTING.Red showing the player left the party
                 MutableText partyAlertMessage = Text.literal("[" + partyName + "] ").styled(style -> style
@@ -655,12 +674,18 @@ public class PartyCommand {
                 );
 
 
-                    partyAlertMessage.append(Text.literal(
-                            banPlayer.getPlayerName()+ " left the party"
-                    ).styled(style -> style
-                            .withColor(Formatting.RED)));
+                partyAlertMessage.append(Text.literal(
+                        banPlayer.getPlayerName() + " left the party"
+                ).styled(style -> style
+                        .withColor(Formatting.RED)));
 
 
+                // Alert other players in the party
+                for (ServerPlayerEntity p : source.getServer().getPlayerManager().getPlayerList()) {
+                    if (party.getPlayerUUIDList().contains(p.getUuid())) {
+                        p.sendMessageToClient(partyAlertMessage, false);
+                    }
+                }
 
         }
 
