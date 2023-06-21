@@ -56,6 +56,37 @@ public class PartyChatFile {
         this.removePlayerFromParty(partyName, player.getUuid());
     }
 
+    public void removePlayerNameFromParty(String partyName, String playerName) {
+        for(Party party : this.parties) {
+            if(party.getPartyName().equals(partyName)) {
+                party.removePlayerFromName(playerName);
+            }
+        }
+    }
+
+    public NameAndUUID findPlayerEntityViaNameFile(String partyName, String playerName) {
+        for(Party party : this.parties) {
+            if(party.getPartyName().equals(partyName)) {
+                return party.findPlayerEntityViaName(playerName);
+            }
+        }
+        return null;
+
+    }
+
+    // Remove player from banned list
+    public void removePlayerFromBannedList(String partyName, UUID playerUUID) {
+        for(Party party : this.parties) {
+            if(party.getPartyName().equals(partyName)) {
+                party.removeBannedPlayer(playerUUID);
+            }
+        }
+    }
+
+    public void removePlayerFromBannedList(String partyName, PlayerEntity player) {
+        this.removePlayerFromBannedList(partyName, player.getUuid());
+    }
+
     public void addParty(Party party) {
         this.parties.add(party);
         this.save();

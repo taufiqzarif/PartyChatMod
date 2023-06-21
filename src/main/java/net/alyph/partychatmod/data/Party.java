@@ -12,6 +12,7 @@ import java.util.UUID;
 public class Party {
     final String partyName;
     private final UUID leaderUUID;
+    private Set<NameAndUUID> bannedPlayersList = Sets.newHashSet();
     private Set<NameAndUUID> playerList = Sets.newHashSet();
     public Party(String partyName, UUID leaderUUID) {
         this.partyName = partyName;
@@ -43,6 +44,17 @@ public class Party {
     public Set<NameAndUUID> getPlayerList() {
         return this.playerList;
     }
+
+    public Set<NameAndUUID> getBannedPlayersList() {
+        return this.bannedPlayersList;
+    }
+    public Set<UUID> getBannedPlayerUUIDList() {
+        Set<UUID> bannedPlayerUUIDList = Sets.newHashSet();
+        for(NameAndUUID player : bannedPlayersList) {
+            bannedPlayerUUIDList.add(player.getPlayerUUID());
+        }
+        return bannedPlayerUUIDList;
+    }
     public Set<UUID> getPlayerUUIDList() {
         Set<UUID> playerUUIDList = Sets.newHashSet();
         for(NameAndUUID player : playerList) {
@@ -65,9 +77,44 @@ public class Party {
         this.playerList.add(player);
     }
 
+    public void addBannedPlayer(PlayerEntity player) {
+        this.bannedPlayersList.add(NameAndUUID.of(player));
+    }
+
+    public void addBannedPlayer(NameAndUUID player) {
+        this.bannedPlayersList.add(player);
+    }
+
+    public NameAndUUID findPlayerEntityViaName(String playerName) {
+        for(NameAndUUID player : playerList) {
+            if(player.getPlayerName().equals(playerName)) {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    public void removeBannedPlayer(UUID playerUUID) {
+        for(NameAndUUID playerInList : bannedPlayersList) {
+            if(playerInList.getPlayerUUID().equals(playerUUID)) {
+                this.bannedPlayersList.remove(playerInList);
+                return;
+            }
+        }
+    }
+
     public void removePlayer(UUID playerUUID) {
         for(NameAndUUID playerInList : playerList) {
             if(playerInList.getPlayerUUID().equals(playerUUID)) {
+                this.playerList.remove(playerInList);
+                return;
+            }
+        }
+    }
+
+    public void removePlayerFromName(String playerName) {
+        for(NameAndUUID playerInList : playerList) {
+            if(playerInList.getPlayerName().equals(playerName)) {
                 this.playerList.remove(playerInList);
                 return;
             }
