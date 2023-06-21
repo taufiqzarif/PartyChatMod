@@ -121,7 +121,7 @@ public class PartyCommand {
         }
 
         if(isExist) {
-            context.getSource().sendError(Text.literal("Party " + newParty + " already exist!"));
+            context.getSource().sendError(Text.literal("Party " + newParty + " already exist"));
             return 0;
         }
 
@@ -166,7 +166,7 @@ public class PartyCommand {
         }
 
         if(party == null) {
-            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist!"));
+            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist"));
             return 0;
         }
 
@@ -222,7 +222,7 @@ public class PartyCommand {
         }
 
         if(party == null) {
-            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist!"));
+            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist"));
             return 0;
         }
 
@@ -232,7 +232,7 @@ public class PartyCommand {
 
         if(senderUUID != null) {
             if(party.getPlayerUUIDList().contains(senderUUID)) {
-                source.sendError(Text.literal("You are already in party \"" + partyName + "\"!"));
+                source.sendError(Text.literal("You are already in party \"" + partyName + "\""));
                 return 0;
             }
         }
@@ -249,12 +249,12 @@ public class PartyCommand {
         // Alert all players in party that someone joined
         for(ServerPlayerEntity p : allOnlinePlayers) {
             if(oldPlayersInParty.contains(p.getUuid())) {
-                p.sendMessageToClient(Text.literal(player.getEntityName() + " joined the party!"), false);
+                p.sendMessageToClient(Text.literal(player.getEntityName() + " joined the party"), false);
             }
         }
 
 
-        source.sendFeedback(() -> Text.literal("Joined party \"" + partyName + "\"!"), true);
+        source.sendFeedback(() -> Text.literal("Joined party \"" + partyName + "\""), true);
 
         return 1;
     }
@@ -272,7 +272,7 @@ public class PartyCommand {
         }
 
         if(party == null) {
-            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist!"));
+            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist"));
             return 0;
         }
 
@@ -281,7 +281,7 @@ public class PartyCommand {
 
         if(currentPlayerUUID != null) {
             if(!party.getPlayerUUIDList().contains(currentPlayerUUID)) {
-                source.sendError(Text.literal("You are not in party \"" + partyName + "\"!"));
+                source.sendError(Text.literal("You are not in party \"" + partyName + "\""));
                 return 0;
             }
         }
@@ -289,8 +289,28 @@ public class PartyCommand {
         ServerPlayerEntity player = null;
         player = source.getPlayer();
 
-        source.sendFeedback(() -> Text.literal("Left party \"" + partyName + "\"!"), true);
+        source.sendFeedback(() -> Text.literal("Left party \"" + partyName + "\""), true);
         PartyChatMod.partyChatFile.removePlayerFromParty(partyName, player);
+
+
+        // Create message with custom color, using FORMATTING.Red showing the player left the party
+        MutableText partyAlertMessage = Text.literal("[" + partyName + "] ").styled(style -> style
+                .withColor(Formatting.YELLOW)
+                .withItalic(true)
+        );
+
+        partyAlertMessage.append(Text.literal(
+                player.getEntityName() + " left the party"
+        ).styled(style -> style
+                .withColor(Formatting.RED)));
+
+        // Alert all players in party that someone left
+        for(ServerPlayerEntity p : source.getServer().getPlayerManager().getPlayerList()) {
+            if(party.getPlayerUUIDList().contains(p.getUuid())) {
+                p.sendMessageToClient(partyAlertMessage, false);
+            }
+        }
+
         return 1;
     }
 
@@ -307,7 +327,7 @@ public class PartyCommand {
         }
 
         if(party == null) {
-            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist!"));
+            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist"));
             return 0;
         }
 
@@ -315,7 +335,7 @@ public class PartyCommand {
 
         if(currentPlayerUUID != null) {
             if(!party.getPlayerUUIDList().contains(currentPlayerUUID)) {
-                source.sendError(Text.literal("You are not in party \"" + partyName + "\"!"));
+                source.sendError(Text.literal("You are not in party \"" + partyName + "\""));
                 return 0;
             }
         }
@@ -352,10 +372,10 @@ public class PartyCommand {
         }
 
         if(isInviteSent) {
-            source.sendFeedback(() -> Text.literal("Invited player to party \"" + partyName + "\"!"), true);
+            source.sendFeedback(() -> Text.literal("Invited player to party \"" + partyName + "\""), true);
             return 1;
         } else {
-            source.sendError(Text.literal("Player already in party \"" + partyName + "\"!"));
+            source.sendError(Text.literal("Player already in party \"" + partyName + "\""));
         }
         return 0;
     }
@@ -374,7 +394,7 @@ public class PartyCommand {
         }
 
         if(party == null) {
-            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist!"));
+            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist").styled(style -> style.withColor(Formatting.GRAY).withItalic(true)));
             return 0;
         }
 
@@ -382,7 +402,7 @@ public class PartyCommand {
 
         if(currentPlayerUUID != null) {
             if(!party.getPlayerUUIDList().contains(currentPlayerUUID)) {
-                source.sendError(Text.literal("You are not in party \"" + partyName + "\"!"));
+                source.sendError(Text.literal("You are not in party \"" + partyName + "\""));
                 return 0;
             }
         }
@@ -391,20 +411,57 @@ public class PartyCommand {
         player = source.getPlayer();
 
         if(party.getLeaderUUID().equals(player.getUuid())) {
-            Collection<ServerPlayerEntity> playerEntities = EntityArgumentType.getPlayers(context, "Players");
 
-            for (ServerPlayerEntity playerEntity : playerEntities) {
+            Collection<ServerPlayerEntity> playerSelected = EntityArgumentType.getPlayers(context, "Players"); // Only for one player [in the argument] or @a, if @a, then all players will be added to playerSelected
+
+            int totalPlayerKicked = 0;
+
+            // Kick the player(s) from the party
+            for (ServerPlayerEntity playerEntity : playerSelected) {
+
                 if(party.getPlayerUUIDList().contains(playerEntity.getUuid())) {
-                    PartyChatMod.partyChatFile.removePlayerFromParty(partyName, playerEntity);
-                    playerEntity.sendMessageToClient(Text.literal("You have been kicked from party \"" + partyName + "\"!"), false);
-                    playerEntity.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.MASTER, 1.0f, 1.0f);
+                    if(!party.getLeaderUUID().equals(playerEntity.getUuid())) {
+                        PartyChatMod.partyChatFile.removePlayerFromParty(partyName, playerEntity);
+                        totalPlayerKicked++;
+                        playerEntity.sendMessageToClient(Text.literal("You have been kicked from party \"" + partyName + "\""), false);
+                        playerEntity.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.MASTER, 1.0f, 1.0f);
+
+                        // Create message with custom color, using FORMATTING.Red showing the player left the party
+                        MutableText partyAlertMessage = Text.literal("[" + partyName + "] ").styled(style -> style
+                                .withColor(Formatting.YELLOW)
+                                .withItalic(true)
+                        );
+
+                        if(playerSelected.size() <= 10) {
+                            partyAlertMessage.append(Text.literal(
+                                    playerEntity.getEntityName() + " left the party"
+                            ).styled(style -> style
+                                    .withColor(Formatting.RED)));
+                        }
+                        else {
+                            partyAlertMessage.append(Text.literal(
+                                    "(" + totalPlayerKicked + ")" + " left the party"
+                            ).styled(style -> style
+                                    .withColor(Formatting.RED)));
+                        }
+
+                        // Alert other players in the party
+                        for (ServerPlayerEntity p : source.getServer().getPlayerManager().getPlayerList()) {
+                            if (party.getPlayerUUIDList().contains(p.getUuid())) {
+                                p.sendMessageToClient(partyAlertMessage, false);
+                            }
+                        }
+                    }
                 }
+
+
             }
 
-            source.sendFeedback(() -> Text.literal("Kicked player from party \"" + partyName + "\"!"), true);
+
+            source.sendFeedback(() -> Text.literal("Kicked player from party \"" + partyName + "\""), true);
             return 1;
         } else {
-            source.sendError(Text.literal("You are not the leader of party \"" + partyName + "\"!"));
+            source.sendError(Text.literal("You are not the leader of party \"" + partyName + "\""));
         }
         return 0;
     }
@@ -422,7 +479,7 @@ public class PartyCommand {
         }
 
         if(party == null) {
-            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist!"));
+            source.sendError(Text.literal("Party \"" + partyName + "\" does not exist"));
             return 0;
         }
 
@@ -430,7 +487,7 @@ public class PartyCommand {
 
         if(currentPlayerUUID != null) {
             if(!party.getPlayerUUIDList().contains(currentPlayerUUID)) {
-                source.sendError(Text.literal("You are not in party \"" + partyName + "\"!"));
+                source.sendError(Text.literal("You are not in party \"" + partyName + "\""));
                 return 0;
             }
         }
