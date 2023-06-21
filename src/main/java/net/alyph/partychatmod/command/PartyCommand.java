@@ -205,6 +205,8 @@ public class PartyCommand {
         final String partyName = StringArgumentType.getString(context, "Party");
         Party party = null;
         ServerCommandSource source = context.getSource();
+        List<ServerPlayerEntity> allOnlinePlayers = source.getServer().getPlayerManager().getPlayerList();
+
 
         for(Party p : PartyChatMod.partyChatFile.parties) {
             if(p.getPartyName().equals(partyName)) {
@@ -233,7 +235,18 @@ public class PartyCommand {
 
         player = source.getPlayer();
 
+        // Get old players in party
+        Set<UUID> oldPlayersInParty = party.getPlayerUUIDList();
+
         party.addPlayer(player);
+
+        // Alert all players in party that someone joined
+        for(ServerPlayerEntity p : allOnlinePlayers) {
+            if(oldPlayersInParty.contains(p.getUuid())) {
+                p.sendMessageToClient(Text.literal(player.getEntityName() + " joined the party!"), false);
+            }
+        }
+
 
         source.sendFeedback(() -> Text.literal("Joined party \"" + partyName + "\"!"), true);
 
