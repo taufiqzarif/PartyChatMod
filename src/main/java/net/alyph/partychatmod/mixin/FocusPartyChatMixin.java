@@ -14,6 +14,7 @@ import java.util.UUID;
 public class FocusPartyChatMixin {
     @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
     protected void injectSendChatMessage(String message, CallbackInfo ci) {
+        //PartyChatMod.LOGGER.info("injectSendChatMessage");
         MinecraftClient client = MinecraftClient.getInstance();
         if(client.player == null) return;
         UUID playerUUID = client.player.getUuid();
