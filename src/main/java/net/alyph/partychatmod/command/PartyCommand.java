@@ -1,10 +1,8 @@
 package net.alyph.partychatmod.command;
 
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -57,7 +55,15 @@ public class PartyCommand {
                 // Create a new party
                 .then(CommandManager.literal("create").requires(serverCommandSource -> true)
                         .then(CommandManager.argument("partyname", StringArgumentType.string())
-                                .executes((context) -> create(context))
+                                .executes(PartyCommand::create)
+                        )
+                )
+
+                // Focus on a party
+                .then(CommandManager.literal("chat")
+                        .then(CommandManager.argument("Party", StringArgumentType.string())
+                                .suggests(PartyCommand::suggestParties)
+                                .executes(PartyCommand::chat)
                         )
                 )
 
@@ -164,18 +170,32 @@ public class PartyCommand {
         return 1;
     }
 
+    // Change default minecraft chat to party chat (/party chat <party name>). So when player type in chat, it will send to party chat instead of minecraft chat. Then, call method message to send the message
+    private static int chat(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        final String partyName = StringArgumentType.getString(context, "Party");
+        ServerCommandSource source = context.getSource();
+
+        // Check if player is in party
+        for(Party p : PartyChatMod.partyChatFile.parties) {
+            if(p.getPartyName().equals(partyName) && p.getPlayerUUIDList().contains(source.getPlayer().getUuid())) {
+                // Assuming PlayerFocusPartyChat is a class that tracks which party each player is chatting in
+                NameAndUUID currentPlayer = NameAndUUID.of((Entity) source.getPlayer());
+                currentPlayer.setFocusPartyChat(partyName);
+                PartyChatMod.playerFocusPartyChat.put(source.getPlayer().getUuid(), partyName);
+                source.sendFeedback(() -> Text.literal("Now chatting in party \"" + partyName + "\""), true);
+                return 1;
+            }
+        }
+
+        return 0;
+    }
+
     // Show player's available parties
     private static CompletableFuture<Suggestions> suggestParties(CommandContext<ServerCommandSource> context, SuggestionsBuilder sBuilder) throws CommandSyntaxException {
         for(String s : PartyChatMod.partyChatFile.getPartiesForPlayer(context.getSource().getPlayer())) {
             sBuilder.suggest(s);
         }
         return sBuilder.buildFuture();
-    }
-
-    // Change player's default chat to send to selected party
-    private static int chat(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        // TODO
-        return 0;
     }
 
     // Handle message

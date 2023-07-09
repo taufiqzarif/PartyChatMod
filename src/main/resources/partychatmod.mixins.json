@@ -4,7 +4,8 @@
 	"compatibilityLevel": "JAVA_17",
 	"mixins": [
 		"ExampleMixin",
-		"ModEntityDataSaver"
+		"ModEntityDataSaver",
+		"FocusPartyChatMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
